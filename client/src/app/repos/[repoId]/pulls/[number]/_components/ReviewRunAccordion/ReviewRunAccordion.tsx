@@ -9,6 +9,7 @@ import React from "react";
 import { Icon, Badge } from "@devdigest/ui";
 import type { ReviewRecord, Verdict } from "@devdigest/shared";
 import { FindingsPanel } from "../FindingsPanel";
+import { CostBadge } from "@/components/cost-badge";
 import { VerdictBanner } from "../VerdictBanner";
 import { useDeleteReview } from "../../../../../../../lib/hooks/reviews";
 
@@ -103,6 +104,7 @@ export function ReviewRunAccordion({
             {review.score}
           </Badge>
         )}
+        <CostBadge usd={review.cost_usd} />
         <span className="mono" style={{ fontSize: 12, color: "var(--text-muted)" }}>
           {formatWhen(review.created_at)}
         </span>
@@ -144,6 +146,9 @@ export function ReviewRunAccordion({
                 findingsCount={findings.length}
                 blockers={blockers}
                 agentName={review.agent_name}
+                costUsd={review.cost_usd}
+                tokensIn={review.tokens_in}
+                tokensOut={review.tokens_out}
               />
             </div>
           )}

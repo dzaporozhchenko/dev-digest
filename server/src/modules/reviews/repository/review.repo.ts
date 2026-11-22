@@ -54,22 +54,42 @@ export async function insertFindings(
   return rows;
 }
 
-/** Reviews for a PR (newest first), each with its findings. */
+/** Run economics joined onto a review via `reviews.run_id` → `agent_runs`.
+ *  Null throughout when the review has no run (older rows) or the run is gone. */
+export interface ReviewRunEconomics {
+  costUsd: number | null;
+  tokensIn: number | null;
+  tokensOut: number | null;
+}
+
+/** Reviews for a PR (newest first), each with its findings + run economics. */
 export async function reviewsForPull(
   db: Db,
   prId: string,
-): Promise<{ review: ReviewRow; findings: FindingRow[] }[]> {
+): Promise<{ review: ReviewRow; findings: FindingRow[]; run: ReviewRunEconomics | null }[]> {
+  // `reviews.run_id` has no FK to `agent_runs`, so this is a plain left join:
+  // a review whose run was deleted still returns, with null economics.
   const reviews = await db
-    .select()
+    .select({
+      review: t.reviews,
+      costUsd: t.agentRuns.costUsd,
+      tokensIn: t.agentRuns.tokensIn,
+      tokensOut: t.agentRuns.tokensOut,
+      runId: t.agentRuns.id,
+    })
     .from(t.reviews)
+    .leftJoin(t.agentRuns, eq(t.agentRuns.id, t.reviews.runId))
     .where(eq(t.reviews.prId, prId))
     .orderBy(desc(t.reviews.createdAt));
   if (reviews.length === 0) return [];
-  const ids = reviews.map((r) => r.id);
+  const ids = reviews.map((r) => r.review.id);
   const findings = await db.select().from(t.findings).where(inArray(t.findings.reviewId, ids));
-  return reviews.map((review) => ({
-    review,
-    findings: findings.filter((f) => f.reviewId === review.id),
+  return reviews.map((row) => ({
+    review: row.review,
+    findings: findings.filter((f) => f.reviewId === row.review.id),
+    run: row.runId
+      ? { costUsd: row.costUsd, tokensIn: row.tokensIn, tokensOut: row.tokensOut }
+      : null,
   }));
 }
 
