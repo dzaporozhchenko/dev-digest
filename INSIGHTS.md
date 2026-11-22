@@ -37,7 +37,18 @@ _(none yet)_
 _Where a tool or library behaved differently from its documentation **in this repo**.
 Not a summary of docs._
 
-_(none yet)_
+- **Install `client/` with `npx pnpm@10`, never the ambient pnpm 12.** `client/package.json`
+  is the only package carrying a `pnpm.overrides` field (`postcss ^8.5.23`, `katex ^0.18.2`);
+  pnpm ≥12 no longer reads it, so a plain install rewrites `pnpm-lock.yaml` without those
+  pins and `--frozen-lockfile` aborts with `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`, while any
+  script fails first with `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN`. `npx -y pnpm@10 install
+  --frozen-lockfile` installs correctly and leaves the lockfile byte-identical (verified by
+  checksum). `client/package.json` · 2026-11-22
+- **A failing `server/ pnpm typecheck` is usually just missing `reviewer-core` deps.** The
+  tsconfig path alias pulls `../reviewer-core/src/**` into the server program, so without
+  `reviewer-core/node_modules` you get 7 errors blaming `openai`/`zod` plus bogus
+  `TS2322 unknown is not assignable to T` in `adapters/llm/*.ts`. Run `cd reviewer-core &&
+  npm ci` first; the gate then passes with zero errors. `server/tsconfig.json` · 2026-11-22
 
 ## Recurring Errors & Fixes
 
