@@ -18,7 +18,13 @@ or delete an existing entry — correct one by appending a `Supersedes:` entry. 
 
 _Approaches that looked right and failed, with the reason. The highest-value section._
 
-_(none yet)_
+- **Never pair `borderColor`/`borderWidth` with a `borderLeft*` accent in inline styles.**
+  They are shorthands for all four sides, so a rerender that changes one logs "Updating a
+  style property during rerender (borderColor) when a conflicting property is set
+  (borderLeftColor)" — the Next dev overlay shows it as a Console Error. `FindingCard` hit
+  this when the `FindingsPanel` severity filter moved focus between cards; a `console.error`
+  spy in `FindingsPanel.test.tsx` now guards it. Write every side's longhand explicitly.
+  `client/src/app/repos/[repoId]/pulls/[number]/_components/FindingCard/styles.ts` · 2026-11-22
 
 ## What Works
 

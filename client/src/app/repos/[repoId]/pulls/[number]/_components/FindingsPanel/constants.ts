@@ -1,4 +1,7 @@
-import type { FindingActionKind } from "@devdigest/shared";
+import type { FindingActionKind, Severity } from "@devdigest/shared";
+
+/** Severities offered by the severity filter, in display order. */
+export const FILTER_SEVERITIES: readonly Severity[] = ["CRITICAL", "WARNING", "SUGGESTION"];
 
 /** Sort weight per severity (lower = shown first). */
 export const SEVERITY_ORDER: Record<string, number> = {
