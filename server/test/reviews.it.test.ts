@@ -202,12 +202,28 @@ d('A2 reviews + agents (Testcontainers pg)', () => {
     expect(trace.config.model).toBe('gpt-4.1');
     expect(trace.stats.grounding).toBe('1/2 passed');
     expect(trace.log.length).toBeGreaterThan(0);
+    // MockLLMProvider prices every call at $0.001, so a single-pass review costs
+    // exactly that — the COST tile in the run trace reads this field.
+    expect(trace.stats.cost_usd).toBeCloseTo(0.001, 6);
 
     // agent_runs row populated for A5 to aggregate
     const [run] = await pg.handle.db.select().from(t.agentRuns).where(eq(t.agentRuns.id, runId));
     expect(run!.status).toBe('done');
     expect(run!.findingsCount).toBe(1);
     expect(run!.grounding).toBe('1/2 passed');
+    // cost survives the round-trip to Postgres (agent_runs.cost_usd)
+    expect(run!.costUsd).toBeCloseTo(0.001, 6);
+
+    // the review DTO joins the run's economics, feeding the verdict banner,
+    // the review-run accordion header and the PR list's cost column
+    expect(review.cost_usd).toBeCloseTo(0.001, 6);
+    expect(review.tokens_in).toBe(100);
+    expect(review.tokens_out).toBe(50);
+
+    // the PR list surfaces the latest review's cost
+    const list = (await app.inject({ method: 'GET', url: `/repos/${pr.repoId}/pulls` })).json();
+    const listed = list.find((p: { id: string }) => p.id === pr.id);
+    expect(listed.cost_usd).toBeCloseTo(0.001, 6);
 
     await app.close();
   });
