@@ -129,6 +129,15 @@ describe("FindingsPanel severity filter", () => {
     expect(mutate).not.toHaveBeenCalled();
   });
 
+  it("switching filters logs no React style warning as focus moves between cards", () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    renderWithIntl(<FindingsPanel findings={FINDINGS} prId="pr1" />);
+    fireEvent.click(chip(/WARNING/));
+    fireEvent.click(chip(/WARNING/));
+    fireEvent.click(chip(/CRITICAL/));
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
   it("keeps counts in step with the list after a finding is dismissed", () => {
     const { rerender } = renderWithIntl(<FindingsPanel findings={FINDINGS} prId="pr1" />);
     fireEvent.click(chip(/CRITICAL/));
